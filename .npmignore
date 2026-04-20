@@ -1,0 +1,7 @@
+.git
+.gitignore
+.vscode/
+.sfdx/
+node_modules/
+*.tgz
+npm-debug.log*
