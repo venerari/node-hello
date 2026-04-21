@@ -5,11 +5,12 @@ on:
     branches:
       - main
       - reusable-workflow
+      - remote-reusable 
   pull_request:
 
 jobs:
   call-reusable-ci:
-    uses: ./.github/workflows/reusable-ci.yml
+    uses: venerari/reusable-ci/.github/workflows/reusable-ci.yml@main
     with:
       image_name: venerayan/node-hello
       dockerhub_username: venerayan
