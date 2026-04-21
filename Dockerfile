@@ -11,6 +11,9 @@ RUN APP_VERSION=$(node -p "require('/tmp/package.json').version") \
     && rm -f /tmp/node-hello-*.tgz /tmp/package.json
 
 RUN npm ci --omit=dev --ignore-scripts
+RUN chown -R node:node /app
+
+USER node
 
 EXPOSE 3000
 
