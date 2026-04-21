@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run build script
+        run: npm run build
+
+      - name: Smoke test application
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm start &
+          app_pid=$!
+          trap 'kill "$app_pid"' EXIT
+          for attempt in {1..10}; do
+            if curl --fail --silent http://127.0.0.1:3000/ | grep -Fx 'Hello Node!'; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Application did not become ready in time" >&2
+          exit 1
+
+      - name: Build Docker image
+        run: docker build --tag node-hello:ci .
