@@ -9,11 +9,26 @@ on:
   pull_request:
 
 jobs:
-  call-reusable-ci:
-    uses: venerari/reusable-ci/.github/workflows/reusable-ci.yml@main
+  checkout:
+    uses: venerari/reusable-ci/.github/workflows/checkout.yml@main
+
+  build:
+    needs: checkout
+    uses: venerari/reusable-ci/.github/workflows/npmbuild.yml@main
+
+  scan:
+    needs: build
+    uses: venerari/reusable-ci/.github/workflows/sonar.yml@main
+    with:
+      run_sonar: true
+    secrets: inherit
+
+  docker:
+    needs: scan
+    if: ${{ needs.scan.result == 'success' || needs.scan.result == 'skipped' }}
+    uses: venerari/reusable-ci/.github/workflows/dockers.yaml@main
     with:
       image_name: venerayan/node-hello
       dockerhub_username: venerayan
       push_image: ${{ github.event_name != 'pull_request' }}
-      run_sonar: true
     secrets: inherit
