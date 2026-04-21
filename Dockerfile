@@ -10,7 +10,7 @@ RUN APP_VERSION=$(node -p "require('/tmp/package.json').version") \
     && tar -xzf "/tmp/node-hello-${APP_VERSION}.tgz" -C /app --strip-components=1 \
     && rm -f /tmp/node-hello-*.tgz /tmp/package.json
 
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --ignore-scripts
 
 EXPOSE 3000
 
