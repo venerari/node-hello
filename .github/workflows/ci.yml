@@ -1,79 +1,19 @@
 name: CI
 
-env:
-  IMAGE_NAME: venerayan/node-hello
-  DOCKERHUB_USERNAME: venerayan
-  DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-  SONARQUBE_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
-
 on:
   push:
     branches:
       - main
+      - reusable-workflow
+      - remote-reusable 
   pull_request:
 
 jobs:
-  build-and-verify:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run build script
-        run: npm run build
-
-      - name: Smoke test application
-        shell: bash
-        run: |
-          set -euo pipefail
-          npm start &
-          app_pid=$!
-          trap 'kill "$app_pid"' EXIT
-          for attempt in {1..10}; do
-            if curl --fail --silent http://127.0.0.1:3000/ | grep -Fx 'Hello Node!'; then
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "Application did not become ready in time" >&2
-          exit 1
-
-      - name: SonarQube scan
-        if: env.SONARQUBE_TOKEN != ''
-        uses: SonarSource/sonarqube-scan-action@v7
-        env:
-          SONAR_TOKEN: ${{ env.SONARQUBE_TOKEN }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Log in to Docker Hub
-        if: github.event_name != 'pull_request' && env.DOCKERHUB_TOKEN != ''
-        uses: docker/login-action@v4
-        with:
-          username: ${{ env.DOCKERHUB_USERNAME }}
-          password: ${{ env.DOCKERHUB_TOKEN }}
-
-      - name: Build and optionally push Docker image
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          push: ${{ github.event_name != 'pull_request' && env.DOCKERHUB_TOKEN != '' }}
-          tags: |
-            ${{ env.IMAGE_NAME }}:latest
-            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+  call-reusable-ci:
+    uses: venerari/reusable-ci/.github/workflows/reusable-ci.yml@main
+    with:
+      image_name: venerayan/node-hello
+      dockerhub_username: venerayan
+      push_image: ${{ github.event_name != 'pull_request' }}
+      run_sonar: true
+    secrets: inherit
