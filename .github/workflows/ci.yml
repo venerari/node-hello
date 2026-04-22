@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-      - reusable-workflow
-      - remote-reusable 
-      - category-ci
   pull_request:
 
 jobs:
